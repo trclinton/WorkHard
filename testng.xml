@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="Parallel Suite" parallel="tests" thread-count="3">
+    <test name="Test Suite">
+        <classes>
+            <class name="DataProviderExample"/>
+        </classes>
+    </test>
+</suite>
