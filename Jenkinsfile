@@ -1,8 +1,9 @@
 pipeline {
     agent {
-            node {
-                label 'any'
-            }
+        docker {
+            image 'gradle:7.2-jdk11'
+            args '-v $HOME/.gradle:/root/.gradle'
+        }
     }
 
     environment {
