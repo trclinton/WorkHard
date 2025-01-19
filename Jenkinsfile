@@ -1,15 +1,11 @@
 pipeline {
-    agent {
-            docker {
-                image 'docker:dind'
-                args '--privileged'
-            }
-        }
+
+    agent any
 
     environment {
-        // Define environment variables
         GRADLE_HOME = tool 'Gradle'
-        PATH = "${GRADLE_HOME}/bin:${env.PATH}"
+        PATH = "/usr/local/bin:${GRADLE_HOME}/bin:${env.PATH}"  // Add /usr/local/bin to PATH
+        DOCKER_PATH = "/Applications/Docker.app/Contents/Resources/bin"  // Docker binary location on Mac
     }
 
     stages {
