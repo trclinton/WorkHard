@@ -1,41 +1,75 @@
 pipeline {
     agent any
 
-    tools {
-        gradle '7.6'  // Use the exact name of your Gradle installation
+    environment {
+        // Define environment variables
+        GRADLE_HOME = tool 'Gradle'
+        PATH = "${GRADLE_HOME}/bin:${env.PATH}"
     }
 
     stages {
         stage('Checkout') {
             steps {
+                // Get code from repository
                 checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Start Selenium Grid') {
             steps {
-                sh 'gradle clean build -x test'
+                script {
+                    // Start Selenium Grid using docker-compose
+                    sh 'docker-compose -f docker-compose.yml up -d'
+                    // Wait for Grid to be ready
+                    sh 'sleep 30'
+                }
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                sh 'gradle test'
-            }
-            post {
-                always {
-                    junit '**/build/test-results/test/*.xml'
+                script {
+                    try {
+                        // Run Gradle tests
+                        sh './gradlew clean test'
+                    } finally {
+                        // Capture test results and reports
+                        junit '**/build/test-results/test/*.xml'
+
+                        // If you're using Allure reports
+                        allure([
+                            includeProperties: false,
+                            jdk: '',
+                            properties: [],
+                            reportBuildPolicy: 'ALWAYS',
+                            results: [[path: 'build/allure-results']]
+                        ])
+                    }
                 }
             }
         }
     }
 
     post {
-        success {
-            echo 'Build and tests completed successfully!'
+        always {
+            script {
+                // Stop Selenium Grid
+                sh 'docker-compose -f docker-compose.yml down'
+
+                // Archive test reports
+                archiveArtifacts artifacts: 'build/reports/**/*', allowEmptyArchive: true
+
+                // Clean up Docker
+                sh 'docker system prune -f'
+            }
         }
+
+        success {
+            echo 'Tests completed successfully!'
+        }
+
         failure {
-            echo 'Build or tests failed!'
+            echo 'Tests failed!'
         }
     }
 }

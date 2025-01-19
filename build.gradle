@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'jacoco'
+    id 'io.qameta.allure' version '2.11.2'
 }
 
 group = 'org.example'
@@ -10,16 +12,52 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.seleniumhq.selenium:selenium-java:4.9.0'
-    testImplementation 'org.testng:testng:7.7.0'  // If using TestNG
+    // Selenium
+    testImplementation 'org.seleniumhq.selenium:selenium-java:4.10.0'
+    testImplementation 'io.qameta.allure:allure-junit5:2.22.0'
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+
+    // Optional: WebDriverManager for local testing
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.3.2'
+}
+
+allure {
+    version = '2.22.0'
+    autoconfigure = true
 }
 
 test {
     useJUnitPlatform()
-    useTestNG()  // Or useJUnit() if you use JUnit
+    systemProperty 'allure.results.directory', 'build/allure-results'
+
+    // Enable parallel execution
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+    systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+
+    // Optional: Configure test logging
     testLogging {
-        events "passed", "skipped", "failed"
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showStandardStreams = true
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        // Add timestamps
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "\nTest result: ${result.resultType}"
+                println "Test summary: ${result.testCount} tests, " +
+                        "${result.successfulTestCount} succeeded, " +
+                        "${result.failedTestCount} failed, " +
+                        "${result.skippedTestCount} skipped"
+            }
+        }
+    }
+
+    reports {
+        html.required = true
     }
 }
