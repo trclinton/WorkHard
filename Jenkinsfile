@@ -1,10 +1,10 @@
 pipeline {
     agent {
-        docker {
-            image 'gradle:7.2-jdk11'
-            args '-v $HOME/.gradle:/root/.gradle'
+            docker {
+                image 'docker:dind'
+                args '--privileged'
+            }
         }
-    }
 
     environment {
         // Define environment variables
@@ -24,7 +24,7 @@ pipeline {
             steps {
                 script {
                     // Start Selenium Grid using docker-compose
-                    sh 'docker-compose -f docker-compose.yml up -d'
+                    sh '/usr/local/bin/docker-compose -f docker-compose.yml up -d'
                     // Wait for Grid to be ready
                     sh 'sleep 30'
                 }
